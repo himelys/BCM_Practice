@@ -3,7 +3,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import multiprocessing
+
 from matplotlib import gridspec
+
+nCPU = multiprocessing.cpu_count()
 
 # %matplotlib inline
 # %config InlineBackend.figure_format = 'retina'
@@ -210,7 +214,7 @@ with pm.Model() as model6:
     # observed
     x = pm.Binomial('x', n=TotalN, p=theta, observed=k)
     # inference
-    trace6 = pm.sample(draws=10000, cores=12)
+    trace6 = pm.sample(draws=10000, cores=nCPU)
 
 pm.traceplot(trace6)
 
