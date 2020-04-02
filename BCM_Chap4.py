@@ -75,9 +75,9 @@ eps = sys.float_info.epsilon
 with pm.Model() as model3:
     # mu_i ~ Uniform(0, 300)
     # notices the shape here need to be properly
-    # initualized to have the right repeated measure
-    # mui = pm.Uniform('mui', 0, 300, shape=(nsbj, 1))
-    mui = pm.Normal('mui',mu=100, tau=.0044,shape=(nsbj,1))
+    # initialized to have the right repeated measure
+    mui = pm.Uniform('mui', 0, 300, shape=(nsbj, 1))
+    # mui = pm.Normal('mui', mu=100, tau=.0044, shape=(nsbj , 1))
 
     # sg ~ Uniform(0, 100)
     sg = pm.Uniform('sg', .0, 100)
