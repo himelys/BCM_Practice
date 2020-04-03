@@ -116,20 +116,61 @@ with pm.Model() as model:
     X = pm.Deterministic('X', tt.log(ab[0]/ab[1]))
     Z = pm.Deterministic('Z', tt.log(tt.sum(ab)))
 
+    alpha = pm.Deterministic('alpha', ab[0])
+    beta = pm.Deterministic('beta', ab[1])
+
     theta = pm.Beta('theta', alpha=ab[0], beta=ab[1], shape=N)
 
     p = pm.Binomial('y', p=theta, observed=y, n=n)
     trace = pm.sample(1000, tune=2000, target_accept=0.95)
 
 # Check the trace. Looks good!
-pm.traceplot(trace, var_names=['ab', 'X', 'Z'])
+# pm.traceplot(trace, var_names=['ab', 'X', 'Z'])
+pm.traceplot(trace, var_names=['alpha','beta'])
+
+print(pm.summary(trace, var_names=['alpha', 'beta']))
 
 plt.figure()
 sns.kdeplot(trace['X'], trace['Z'], shade=True, cmap='viridis')
+# begi = 4000
+#
+# alpha_trunc = trace['beta'][begi: begi + 1000]
+# beta_trunc = trace['alpha'][begi: begi + 1000]
+#
+# fig, ax = plt.subplots(figsize=(8, 7))
+# sns.kdeplot(np.log(alpha_trunc / beta_trunc), np.log(alpha_trunc + beta_trunc),
+#             cmap=plt.cm.viridis, n_levels=11, ax=ax)
+# ax.set_xlim(1.5, 2.1)
+# ax.set_ylim(1.7, 3.75)
+# ax.set_xlabel('log(alpha / beta)')
+# ax.set_ylabel('log(alpha + beta)')
 
-pm.plot_posterior(trace, var_names=['ab'])
+pm.plot_posterior(trace, var_names=['alpha','beta'])
 
 # estimate the means from the samples
 print(trace['ab'].mean(axis=0))
+
+post_theta = pm.sample_ppc(trace, samples=1000, model=model, vars=[theta], progressbar=False)
+median_theta = []
+
+for i in range(post_theta['theta'].shape[1]):
+    median_theta.append(np.median(post_theta['theta'][:, i]))
+
+error_up = []
+error_down = []
+
+for i in range(post_theta['theta'].shape[1]):
+    a, b = pm.hpd(post_theta['theta'][:, i])
+    error_up.append(b)
+    error_down.append(a)
+
+plt.figure(figsize=(10, 8))
+plt.errorbar(y / n, median_theta, fmt='o',
+             yerr=[error_down, error_up], ecolor='C5', markerfacecolor='k', mec='k',
+             errorevery=1)
+plt.plot(np.linspace(0, .4, 10), np.linspace(0, .4, 10),
+         color='k')
+plt.xlabel('Observed rate, y(i) / N(i)', fontsize=14)
+plt.ylabel('95% hightest posterior density for each theta', fontsize=14);
 
 plt.show()
